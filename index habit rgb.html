@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Habit RPG — Level Up</title>
+<style>
+:root{--bg:#0e1020;--card:#171a31;--card2:#1e2240;--line:#2c3159;--text:#eef0ff;--mute:#9aa0c8;--pri:#8b6cff;--pri2:#ff6ca8;--ok:#37d6a0;--warn:#ffc65c;--bad:#ff6b7a;--r:16px}
+*{box-sizing:border-box;margin:0}
+html{overflow-x:hidden}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;background:radial-gradient(1000px 500px at 80% -10%,#2a1f5c 0,transparent 60%),var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:1.9rem;letter-spacing:.5px}
+.sub{color:var(--mute)}
+.badges{display:flex;gap:10px}
+.badge{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-weight:700}
+.badge.lv{background:linear-gradient(135deg,var(--pri),var(--pri2));border:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;background:linear-gradient(135deg,#2a1f5c,var(--card) 60%);margin-bottom:16px}
+.hero .big{font-size:3.6rem;font-weight:800;line-height:1}
+.hero .lab{color:var(--mute);font-size:.9rem}
+.hero .xpbig{font-size:1.6rem;font-weight:700;color:var(--warn)}
+.bar{height:16px;background:#0b0d1d;border-radius:99px;overflow:hidden;border:1px solid var(--line);margin:10px 0 6px}
+.bar>div{height:100%;width:0;background:linear-gradient(90deg,var(--pri),var(--pri2));transition:width .5s ease}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat{text-align:center;padding:14px 8px}
+.stat b{display:block;font-size:1.9rem}
+.stat span{color:var(--mute);font-size:.85rem}
+form.add{display:grid;grid-template-columns:1fr 180px auto;gap:10px;margin-bottom:6px}
+input[type=text],select{background:#0b0d1d;border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%;min-width:0}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;background:linear-gradient(135deg,var(--pri),var(--pri2));transition:transform .15s,filter .15s}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.btn.sec{background:var(--card2);border:1px solid var(--line)}
+.btn.bad{background:var(--bad);color:#26060b}
+.btn.sm{padding:8px 12px;font-size:.9rem}
+.err{color:var(--bad);min-height:1.4em;font-size:.9rem;margin-bottom:10px}
+.banner{background:#4a3a10;border:1px solid var(--warn);color:#ffe9b0;padding:10px 14px;border-radius:12px;margin-bottom:12px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:18px 0 12px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--mute)}
+.chip[aria-pressed=true]{background:var(--pri);color:#fff;border-color:var(--pri)}
+.tools select{width:auto}
+ul{list-style:none;padding:0;display:grid;gap:12px}
+.habit{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:16px;transition:transform .15s,border-color .15s}
+.habit:hover{transform:translateY(-2px);border-color:var(--pri)}
+.habit.done{background:#12281f;border-color:#235f48}
+.habit.done .title{text-decoration:line-through;color:var(--mute)}
+.title{font-weight:700;font-size:1.05rem;word-break:break-word;overflow-wrap:anywhere}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.82rem}
+.tag{background:var(--card2);border-radius:99px;padding:3px 10px;color:var(--mute)}
+.tag.xp{color:var(--warn)}
+.tag.st.done{color:var(--ok)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.do{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-weight:700}
+.habit.done .do{background:var(--ok);color:#06251a;border-color:var(--ok)}
+.icon{background:var(--card2);border:1px solid var(--line);border-radius:12px;width:42px;height:42px}
+.icon:hover{border-color:var(--pri)}
+.editrow{display:flex;gap:8px;flex-wrap:wrap}
+.editrow input{flex:1;min-width:140px}
+.empty{text-align:center;padding:40px 20px}
+.empty .em{font-size:3rem}
+.empty h2{margin:8px 0}
+.empty p{color:var(--mute);margin-bottom:16px}
+.foot{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.foot .grow{flex:1}
+#toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:50;max-width:calc(100vw - 32px)}
+.toast{background:var(--card2);border-left:5px solid var(--ok);padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:in .25s ease}
+.toast.warn{border-color:var(--warn)}.toast.err{border-color:var(--bad)}
+@keyframes in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.modal{position:fixed;inset:0;background:rgba(5,6,15,.75);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
+.modal[hidden]{display:none}
+.modal .card{max-width:400px;width:100%}
+.modal p{color:var(--mute);margin:8px 0 16px}
+.modal .row{display:flex;gap:10px;justify-content:flex-end}
+.sr{position:absolute;left:-9999px}
+@media(max-width:700px){
+ .hero{grid-template-columns:1fr;text-align:center}
+ .stats{grid-template-columns:repeat(2,1fr)}
+ form.add{grid-template-columns:1fr}
+ .habit{grid-template-columns:1fr}
+ .acts{justify-content:flex-start}
+ h1{font-size:1.5rem}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <header>
+  <div>
+   <h1>🎮 Habit RPG</h1>
+   <p class="sub">Build habits. Gain XP. Level up.</p>
+  </div>
+  <div class="badges" aria-label="Статус игрока">
+   <span class="badge lv" id="hdrLevel">Level 1</span>
+   <span class="badge" id="hdrXp">0 XP</span>
+  </div>
+ </header>
+
+ <div id="memBanner" class="banner" role="alert" hidden>⚠ Не удалось сохранить данные в браузере. Они временно остаются только в памяти — после обновления страницы пропадут. Сделайте Export JSON.</div>
+
+ <main>
+  <section class="card hero" aria-label="Карточка игрока">
+   <div>
+    <div class="lab">LEVEL</div>
+    <div class="big" id="heroLevel">1</div>
+   </div>
+   <div>
+    <div class="xpbig" id="heroXp">0 XP</div>
+    <div class="bar" id="bar" role="progressbar" aria-label="Прогресс до следующего уровня" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="barFill"></div></div>
+    <div class="lab"><span id="heroNext">0 / 100 XP</span> до уровня <span id="heroNextLv">2</span> · <span id="heroPct">0%</span></div>
+   </div>
+  </section>
+
+  <section class="stats" aria-label="Статистика">
+   <div class="card stat"><b id="stTotal">0</b><span>Всего привычек</span></div>
+   <div class="card stat"><b id="stDone">0</b><span>Выполнено</span></div>
+   <div class="card stat"><b id="stActive">0</b><span>Активных</span></div>
+   <div class="card stat"><b id="stPct">0%</b><span>Процент выполнения</span></div>
+  </section>
+
+  <section class="card" aria-label="Новая привычка">
+   <form class="add" id="addForm" novalidate>
+    <label class="sr" for="titleInput">Название привычки</label>
+    <input type="text" id="titleInput" placeholder="Например: Пить 2 литра воды" autocomplete="off" aria-describedby="formError">
+    <label class="sr" for="catInput">Категория</label>
+    <select id="catInput"></select>
+    <button class="btn" type="submit" aria-label="Добавить привычку">+ Добавить привычку</button>
+   </form>
+   <div class="err" id="formError" role="alert"></div>
+  </section>
+
+  <div class="tools">
+   <div class="seg" id="statusFilters" role="group" aria-label="Фильтр по статусу">
+    <button class="chip" data-filter="all" aria-pressed="true">Все</button>
+    <button class="chip" data-filter="done" aria-pressed="false">Выполненные</button>
+    <button class="chip" data-filter="active" aria-pressed="false">Невыполненные</button>
+   </div>
+   <label class="sr" for="catFilter">Фильтр по категории</label>
+   <select id="catFilter"></select>
+  </div>
+
+  <ul id="list" aria-label="Список привычек"></ul>
+  <div id="empty" class="card empty" hidden></div>
+ </main>
+
+ <div class="foot">
+  <button class="btn sec" id="exportBtn" aria-label="Экспортировать данные в JSON">Export JSON</button>
+  <button class="btn sec" id="importBtn" aria-label="Импортировать данные из JSON">Import JSON</button>
+  <input type="file" id="importFile" accept=".json,application/json" hidden>
+  <span class="grow"></span>
+  <button class="btn bad" id="resetBtn" aria-label="Сбросить весь прогресс">Reset progress</button>
+ </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+
+<div class="modal" id="modal" hidden>
+ <div class="card" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <h2 id="mTitle">Reset progress?</h2>
+  <p>Все привычки и XP будут удалены. Это действие нельзя отменить.</p>
+  <div class="row">
+   <button class="btn sec" id="mCancel">Отмена</button>
+   <button class="btn bad" id="mOk">Да, сбросить</button>
+  </div>
+ </div>
+</div>
+
+<script>
+"use strict";
+
+/* ================= STATE ================= */
+const CATEGORIES = ["Здоровье", "Учёба", "Спорт", "Работа", "Личное", "Другое"];
+const REWARD = 10;
+const MAX_TITLE = 80;
+let habits = [];
+let xp = 0;
+let currentFilter = "all";      // all | done | active
+let currentCategory = "all";    // all | одна из CATEGORIES
+let editingId = null;
+let storageOk = true;
+let idCounter = 0;
+
+const $ = (id) => document.getElementById(id);
+
+/* ================= STORAGE ================= */
+function safeGet(key) {
+  try { return localStorage.getItem(key); }
+  catch (e) { storageOk = false; return null; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem("habits", JSON.stringify(habits));
+    localStorage.setItem("xp", String(xp));
+    storageOk = true;
+  } catch (e) {
+    storageOk = false;
+  }
+  $("memBanner").hidden = storageOk;
+}
+
+function backupRaw(raw) {
+  try { localStorage.setItem("habits_backup", raw); } catch (e) { /* нет доступа */ }
+}
+
+// Проверяет одну привычку. Возвращает чистый объект или null.
+function normalizeHabit(h) {
+  if (!h || typeof h !== "object" || Array.isArray(h)) return null;
+  if (typeof h.title !== "string" || typeof h.done !== "boolean") return null;
+  const title = h.title.trim();
+  if (title.length < 1 || title.length > MAX_TITLE) return null;
+  if (typeof h.id !== "string" && typeof h.id !== "number") return null;
+  return {
+    id: String(h.id),
+    title: title,
+    xp: REWARD,
+    done: h.done,
+    category: CATEGORIES.includes(h.category) ? h.category : "Другое",
+    createdAt: Number.isFinite(h.createdAt) ? h.createdAt : Date.now()
+  };
+}
+
+// Возвращает { list, skipped }. Дубли id пропускаются.
+function sanitizeList(data) {
+  const list = [], seen = new Set();
+  let skipped = 0;
+  data.forEach((item) => {
+    const h = normalizeHabit(item);
+    if (!h || seen.has(h.id)) { skipped++; return; }
+    seen.add(h.id);
+    list.push(h);
+  });
+  return { list, skipped };
+}
+
+let startupNotices = [];
+
+function loadHabits() {
+  const raw = safeGet("habits");
+  if (raw === null) return [];
+  try {
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data)) throw new Error("habits is not an array");
+    const res = sanitizeList(data);
+    if (res.skipped > 0) startupNotices.push(["⚠ Skipped " + res.skipped + " invalid habit(s)", "warn"]);
+    return res.list;
+  } catch (e) {
+    backupRaw(raw);
+    startupNotices.push(["⚠ Saved data is corrupted. A copy is stored in habits_backup", "err"]);
+    return [];
+  }
+}
+
+function loadXp() {
+  const n = Number(safeGet("xp"));
+  return Number.isFinite(n) && n >= 0 ? n : calcXp();
+}
+
+/* ================= HABITS ================= */
+function newId() {
+  idCounter++;
+  return Date.now().toString(36) + "-" + idCounter + "-" + Math.random().toString(36).slice(2, 8);
+}
+
+function validateTitle(raw) {
+  const value = String(raw).trim();
+  if (value.length < 1) return { ok: false, error: "Enter a habit name" };
+  if (value.length > MAX_TITLE) return { ok: false, error: "Name is too long (max " + MAX_TITLE + " characters)" };
+  return { ok: true, value: value };
+}
+
+function addHabit(title, category) {
+  const check = validateTitle(title);
+  if (!check.ok) return check;
+  habits.push({
+    id: newId(),
+    title: check.value,
+    xp: REWARD,
+    done: false,
+    category: CATEGORIES.includes(category) ? category : "Другое",
+    createdAt: Date.now()
+  });
+  xp = calcXp();
+  saveData();
+  renderAll();
+  return { ok: true };
+}
+
+function toggleHabit(id) {
+  const h = habits.find((x) => x.id === id);
+  if (!h) return;
+  h.done = !h.done;
+  xp = calcXp();            // XP всегда считается из массива — накрутка невозможна
+  saveData();
+  renderAll();
+  toast(h.done ? "✓ Habit completed +" + REWARD + " XP" : "↩ Completion removed −" + REWARD + " XP");
+}
+
+function deleteHabit(id) {
+  const idx = habits.findIndex((x) => x.id === id);
+  if (idx === -1) return;
+  habits.splice(idx, 1);
+  if (editingId === id) editingId = null;
+  xp = calcXp();            // выполненная — XP уменьшился, невыполненная — не изменился
+  saveData();
+  renderAll();
+  toast("✓ Habit deleted");
+}
+
+function editHabit(id, newTitle) {
+  const check = validateTitle(newTitle);
+  if (!check.ok) return check;
+  const h = habits.find((x) => x.id === id);
+  if (h) h.title = check.value;   // XP не трогаем
+  editingId = null;
+  saveData();
+  renderAll();
+  return { ok: true };
+}
+
+/* ================= XP / LEVEL ================= */
+function calcXp() {
+  return habits.filter((h) => h.done).reduce((sum, h) => sum + h.xp, 0);
+}
+function getLevel() {
+  return 1 + Math.floor(xp / 100);
+}
+
+/* ================= FILTERS ================= */
+function getVisibleHabits() {
+  return habits.filter((h) => {
+    const okStatus = currentFilter === "all" || (currentFilter === "done" ? h.done : !h.done);
+    const okCat = currentCategory === "all" || h.category === currentCategory;
+    return okStatus && okCat;
+  });
+}
+
+/* ================= STATISTICS ================= */
+function getStats() {
+  const total = habits.length;
+  const done = habits.filter((h) => h.done).length;
+  return { total, done, active: total - done, pct: total ? Math.round((done / total) * 100) : 0 };
+}
+
+/* ================= RENDER ================= */
+function renderPlayer() {
+  const level = getLevel();
+  const inLevel = xp % 100;
+  $("hdrLevel").textContent = "Level " + level;
+  $("hdrXp").textContent = xp + " XP";
+  $("heroLevel").textContent = level;
+  $("heroXp").textContent = xp + " XP";
+  $("heroNext").textContent = xp + " / " + level * 100 + " XP";
+  $("heroNextLv").textContent = level + 1;
+  $("heroPct").textContent = inLevel + "%";
+  $("barFill").style.width = inLevel + "%";
+  $("bar").setAttribute("aria-valuenow", inLevel);
+}
+
+function renderStats() {
+  const s = getStats();
+  $("stTotal").textContent = s.total;
+  $("stDone").textContent = s.done;
+  $("stActive").textContent = s.active;
+  $("stPct").textContent = s.pct + "%";
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function actionBtn(cls, text, label, action, id) {
+  const b = el("button", cls, text);
+  b.type = "button";
+  b.setAttribute("aria-label", label);
+  b.dataset.action = action;
+  b.dataset.id = id;
+  return b;
+}
+
+function buildCard(h) {
+  const li = el("li", "card habit" + (h.done ? " done" : ""));
+  const left = el("div");
+  if (editingId === h.id) {
+    const row = el("div", "editrow");
+    const input = el("input");
+    input.type = "text";
+    input.value = h.title;
+    input.id = "editInput";
+    input.setAttribute("aria-label", "Новое название привычки");
+    input.dataset.id = h.id;
+    row.append(input, actionBtn("btn sm", "Сохранить", "Сохранить изменения", "save", h.id),
+      actionBtn("btn sm sec", "Отмена", "Отменить редактирование", "cancel", h.id));
+    left.append(row, el("div", "err"));
+    left.lastChild.id = "editError";
+  } else {
+    left.append(el("div", "title", h.title));
+  }
+  const meta = el("div", "meta");
+  meta.append(el("span", "tag", h.category), el("span", "tag xp", "+" + h.xp + " XP"),
+    el("span", "tag st" + (h.done ? " done" : ""), h.done ? "Выполнено" : "В процессе"));
+  left.append(meta);
+
+  const acts = el("div", "acts");
+  acts.append(
+    actionBtn("do", h.done ? "✓ Выполнено" : "○ Выполнить", (h.done ? "Снять выполнение: " : "Выполнить: ") + h.title, "toggle", h.id),
+    actionBtn("icon", "✎", "Редактировать: " + h.title, "edit", h.id),
+    actionBtn("icon", "🗑", "Удалить: " + h.title, "delete", h.id)
+  );
+  li.append(left, acts);
+  return li;
+}
+
+function renderHabits() {
+  const list = $("list"), empty = $("empty");
+  list.textContent = "";
+  empty.textContent = "";
+  if (habits.length === 0) {
+    empty.hidden = false;
+    empty.append(el("div", "em", "🛡️"), el("h2", "", "No habits yet"),
+      el("p", "", "Create your first habit and start leveling up."));
+    const b = el("button", "btn", "+ Create Habit");
+    b.type = "button";
+    b.id = "createBtn";
+    b.setAttribute("aria-label", "Создать первую привычку");
+    empty.append(b);
+    return;
+  }
+  const visible = getVisibleHabits();
+  if (visible.length === 0) {
+    empty.hidden = false;
+    empty.append(el("div", "em", "🔍"), el("h2", "", "Nothing found"), el("p", "", "No habits match the selected filters."));
+    return;
+  }
+  empty.hidden = true;
+  visible.forEach((h) => list.append(buildCard(h)));
+}
+
+function renderFilters() {
+  document.querySelectorAll("#statusFilters .chip").forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.filter === currentFilter));
+  });
+}
+
+function renderAll() {
+  renderPlayer();
+  renderStats();
+  renderFilters();
+  renderHabits();
+  if (editingId) {
+    const inp = $("editInput");
+    if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
+}
+
+/* ================= NOTIFICATIONS ================= */
+function toast(text, type) {
+  const t = el("div", "toast" + (type ? " " + type : ""), text);
+  $("toasts").append(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+/* ================= IMPORT / EXPORT ================= */
+function exportJson() {
+  const data = { app: "Habit RPG", exportedAt: new Date().toISOString(), xp: xp, habits: habits };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "habit-rpg-" + new Date().toISOString().slice(0, 10) + ".json";
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast("✓ Data exported");
+}
+
+// Строго проверяет файл. При любой ошибке бросает Error и ничего не меняет.
+function parseImport(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { throw new Error("File is not valid JSON"); }
+  const arr = Array.isArray(data) ? data : data && data.habits;
+  if (!Array.isArray(arr)) throw new Error("Field 'habits' must be an array");
+  if (arr.length > 1000) throw new Error("Too many habits (max 1000)");
+  const res = sanitizeList(arr);
+  if (res.skipped > 0) throw new Error(res.skipped + " habit(s) have wrong fields, types or duplicate ids");
+  return res.list;
+}
+
+function importJson(file) {
+  if (!file) return;
+  if (file.size > 1024 * 1024) { toast("⚠ File is too large (max 1 MB)", "err"); return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      habits = parseImport(String(reader.result));
+      editingId = null;
+      xp = calcXp();
+      saveData();
+      renderAll();
+      toast("✓ Imported " + habits.length + " habit(s)");
+    } catch (e) {
+      toast("⚠ Import failed: " + e.message, "err");
+    }
+  };
+  reader.onerror = () => toast("⚠ Could not read the file", "err");
+  reader.readAsText(file);
+}
+
+/* ================= RESET ================= */
+function openModal() {
+  $("modal").hidden = false;
+  $("mCancel").focus();
+}
+function closeModal() {
+  $("modal").hidden = true;
+  $("resetBtn").focus();
+}
+function resetProgress() {
+  habits = [];
+  xp = 0;
+  editingId = null;
+  saveData();            // сохраняем пустое состояние, localStorage.clear() не используем
+  renderAll();
+  $("modal").hidden = true;
+  toast("✓ Progress reset");
+}
+
+/* ================= EVENTS ================= */
+function setupEvents() {
+  $("addForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const res = addHabit($("titleInput").value, $("catInput").value);
+    if (!res.ok) {
+      $("formError").textContent = res.error;
+      toast("⚠ " + res.error, "warn");
+      $("titleInput").focus();
+      return;
+    }
+    $("formError").textContent = "";
+    $("titleInput").value = "";
+    $("titleInput").focus();
+    toast("✓ Habit added");
+  });
+  $("titleInput").addEventListener("input", () => { $("formError").textContent = ""; });
+
+  $("statusFilters").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-filter]");
+    if (!b) return;
+    currentFilter = b.dataset.filter;
+    renderAll();
+  });
+  $("catFilter").addEventListener("change", (e) => { currentCategory = e.target.value; renderAll(); });
+
+  $("list").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-action]");
+    if (!b) return;
+    const id = b.dataset.id;
+    const action = b.dataset.action;
+    if (action === "toggle") toggleHabit(id);
+    else if (action === "delete") deleteHabit(id);
+    else if (action === "edit") { editingId = id; renderAll(); }
+    else if (action === "cancel") { editingId = null; renderAll(); }
+    else if (action === "save") trySaveEdit(id);
+  });
+  $("list").addEventListener("keydown", (e) => {
+    if (e.target.id !== "editInput") return;
+    if (e.key === "Enter") trySaveEdit(e.target.dataset.id);
+    if (e.key === "Escape") { editingId = null; renderAll(); }
+  });
+
+  $("empty").addEventListener("click", (e) => {
+    if (e.target.id === "createBtn") $("titleInput").focus();
+  });
+
+  $("exportBtn").addEventListener("click", exportJson);
+  $("importBtn").addEventListener("click", () => $("importFile").click());
+  $("importFile").addEventListener("change", (e) => {
+    importJson(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  $("resetBtn").addEventListener("click", openModal);
+  $("mCancel").addEventListener("click", closeModal);
+  $("mOk").addEventListener("click", resetProgress);
+  $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) closeModal(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("modal").hidden) closeModal();
+  });
+}
+
+function trySaveEdit(id) {
+  const inp = $("editInput");
+  const res = editHabit(id, inp ? inp.value : "");
+  if (!res.ok) {
+    $("editError").textContent = res.error;
+    toast("⚠ " + res.error, "warn");
+    inp.focus();
+  } else {
+    toast("✓ Habit updated");
+  }
+}
+
+/* ================= INIT ================= */
+function fillSelects() {
+  CATEGORIES.forEach((c) => {
+    const o = el("option", "", c);
+    o.value = c;
+    $("catInput").append(o);
+  });
+  const all = el("option", "", "Все категории");
+  all.value = "all";
+  $("catFilter").append(all);
+  CATEGORIES.forEach((c) => {
+    const o = el("option", "", c);
+    o.value = c;
+    $("catFilter").append(o);
+  });
+}
+
+function init() {
+  fillSelects();
+  habits = loadHabits();          // 1. загрузить привычки
+  xp = loadXp();                  // 2. загрузить XP
+  if (xp !== calcXp()) {          // 3-4. проверить и восстановить XP из массива
+    xp = calcXp();
+    saveData();
+  }
+  $("memBanner").hidden = storageOk;
+  setupEvents();
+  renderAll();                    // 5. первая отрисовка
+  startupNotices.forEach((n) => toast(n[0], n[1]));
+}
+
+init();
+</script>
+</body>
+</html>
